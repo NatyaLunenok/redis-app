@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  labels:
+    app: order-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+    spec:
+      containers:
+      - name: order-service
+        image: order-service:local
+        imagePullPolicy: Never
+        env:
+        - name: REDIS_HOST
+          value: redis
+        # Liveness Probe
+        livenessProbe:
+          exec:
+            command:
+              - python
+              - -c
+              - "import redis, os; r = redis.Redis(host=os.environ.get('REDIS_HOST', 'localhost')); r.ping()"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        # Readiness Probe
+        readinessProbe:
+          exec:
+            command:
+              - python
+              - -c
+              - "import redis, os; r = redis.Redis(host=os.environ.get('REDIS_HOST', 'localhost')); r.ping()"
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
